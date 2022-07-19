@@ -1,6 +1,5 @@
 package com.nando.codgen.models
 
 data class EnumProperty(
-    val name: String,
-    val value: Int
+    val name: String
 )

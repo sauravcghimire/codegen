@@ -29,6 +29,53 @@
   ],
   "models": [
     {
+      "name": "Address",
+      "properties": [
+        {
+          "name": "displayName",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "latitude",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "longitude",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "ContactNumber",
+      "properties": [
+        {
+          "name": "type",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "number",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        }
+      ]
+    },
+    {
       "name": "AddUserRequestModel",
       "properties": [
         {
@@ -59,7 +106,7 @@
         {
           "name": "age",
           "type": {
-            "typeId": 3,
+            "typeId": 5,
             "formatId": 0,
             "nullable": true
           }
@@ -94,53 +141,6 @@
             "of": {
               "typeId": 3
             },
-            "nullable": false
-          }
-        }
-      ]
-    },
-    {
-      "name": "ContactNumber",
-      "properties": [
-        {
-          "name": "type",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "number",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        }
-      ]
-    },
-    {
-      "name": "Address",
-      "properties": [
-        {
-          "name": "displayName",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "latitude",
-          "type": {
-            "typeId": 5,
-            "formatId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "longitude",
-          "type": {
-            "typeId": 5,
-            "formatId": 3,
             "nullable": false
           }
         }
