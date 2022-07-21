@@ -5,7 +5,7 @@
       "name": "UserRepository",
       "methods": [
         {
-          "name": "AddUser",
+          "name": "addUser",
           "authorized": false,
           "httpMethod": 0,
           "path": "/user/add",
@@ -28,53 +28,6 @@
     }
   ],
   "models": [
-    {
-      "name": "Address",
-      "properties": [
-        {
-          "name": "displayName",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "latitude",
-          "type": {
-            "typeId": 5,
-            "formatId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "longitude",
-          "type": {
-            "typeId": 5,
-            "formatId": 3,
-            "nullable": false
-          }
-        }
-      ]
-    },
-    {
-      "name": "ContactNumber",
-      "properties": [
-        {
-          "name": "type",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        },
-        {
-          "name": "number",
-          "type": {
-            "typeId": 3,
-            "nullable": false
-          }
-        }
-      ]
-    },
     {
       "name": "AddUserRequestModel",
       "properties": [
@@ -142,6 +95,80 @@
               "typeId": 3
             },
             "nullable": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "Address",
+      "properties": [
+        {
+          "name": "displayName",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "latitude",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "longitude",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "ContactNumber",
+      "properties": [
+        {
+          "name": "type",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "number",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "AddUserResponseModel",
+      "properties": [
+        {
+          "name": "code",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "message",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "data",
+          "type": {
+            "typeId": 7,
+            "nullable": true
           }
         }
       ]
