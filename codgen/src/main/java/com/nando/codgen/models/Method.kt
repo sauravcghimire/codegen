@@ -6,5 +6,5 @@ data class Method(
     val name: String,
     val parameter: List<Parameter>,
     val path: String,
-    val returnType: ReturnType
+    val returnType: Type
 )

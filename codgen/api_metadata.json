@@ -14,14 +14,25 @@
               "name": "user",
               "type": {
                 "typeId": 0,
-                "typeName": "AddUserRequestModel",
+                "name": "UserModel",
                 "nullable": false
               }
             }
           ],
           "returnType": {
             "typeId": 0,
-            "typeName": "AddUserResponseModel"
+            "name": "AddUserResponseModel"
+          }
+        },{
+          "name": "getUsers",
+          "authorized": false,
+          "httpMethod": 1,
+          "path": "/user/get",
+          "parameter": [
+          ],
+          "returnType": {
+            "typeId": 0,
+            "name": "GetUserResponseModel"
           }
         }
       ]
@@ -29,7 +40,7 @@
   ],
   "models": [
     {
-      "name": "AddUserRequestModel",
+      "name": "UserModel",
       "properties": [
         {
           "name": "fullName",
@@ -168,6 +179,37 @@
           "name": "data",
           "type": {
             "typeId": 7,
+            "nullable": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "GetUserResponseModel",
+      "properties": [
+        {
+          "name": "code",
+          "type": {
+            "typeId": 5,
+            "formatId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "message",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "data",
+          "type": {
+            "typeId": 2,
+            "of": {
+              "typeId": 0,
+              "name": "UserModel"
+            },
             "nullable": true
           }
         }
