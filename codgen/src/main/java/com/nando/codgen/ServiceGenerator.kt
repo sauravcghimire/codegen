@@ -11,6 +11,28 @@ import kotlin.io.path.Path
 object ServiceGenerator {
 
     private const val GENERATED_FILE_PACKAGE = "com.nando.codegen.generated"
+    private val path = Path(getGeneratedDirectory())
+
+    private val inject = ClassName("javax.inject", "Inject")
+    private val installInClassName: ClassName = ClassName("dagger.hilt", "InstallIn")
+    private val singletonComponent = ClassName("dagger.hilt.components", "SingletonComponent")
+    private val provides = ClassName("dagger", "Provides")
+    private val singleton = ClassName("javax.inject", "Singleton")
+
+    private val retrofit = ClassName("retrofit2", "Retrofit")
+    private val gsonConverterFactory = ClassName("retrofit2.converter.gson", "GsonConverterFactory")
+    private val post = ClassName("retrofit2.http", "POST")
+    private val `get` = ClassName("retrofit2.http", "GET")
+    private val put = ClassName("retrofit2.http", "PUT")
+    private val delete = ClassName("retrofit2.http", "DELETE")
+    private val head = ClassName("retrofit2.http", "HEAD")
+    private val options = ClassName("retrofit2.http", "OPTIONS")
+
+    val flow = ClassName("kotlinx.coroutines.flow", "flow")
+
+    val api = ClassName("$GENERATED_FILE_PACKAGE.data", "Api")
+    private val apiProviderFunction = FunSpec.builder("provideApi")
+
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -20,7 +42,105 @@ object ServiceGenerator {
             ApiMetaData::class.java
         )
 
-        val flow = ClassName("kotlinx.coroutines.flow", "flow")
+
+        /*Generate DI Module*/
+        val diFileSpecBuilder =
+            FileSpec.builder("$GENERATED_FILE_PACKAGE.di", "AppModule")
+        val diTypeSpecBuilder = TypeSpec.objectBuilder("AppModule")
+
+        val moduleClassName = ClassName("dagger", "Module")
+        diTypeSpecBuilder.addAnnotation(moduleClassName)
+
+        /*Install and singleton in Annotation*/
+        val installInAnnotationSpec = AnnotationSpec.builder(installInClassName)
+            .addMember("%T::class", singletonComponent)
+            .build()
+        diTypeSpecBuilder.addAnnotation(installInAnnotationSpec)
+
+
+        apiProviderFunction.returns(api)
+        apiProviderFunction.addStatement(
+            "return %T.Builder()\n" +
+                    ".baseUrl(\"${apiMetaData.baseUrl}\")\n" +
+                    ".addConverterFactory(%T.create())\n" +
+                    ".build()\n" +
+                    ".create(Api::class.java)\n",
+            retrofit, gsonConverterFactory
+        )
+        apiProviderFunction.addAnnotation(provides)
+        apiProviderFunction.addAnnotation(singleton)
+        diTypeSpecBuilder.addFunction(apiProviderFunction.build())
+
+
+        apiMetaData.repos.forEach {
+            val funSpec = FunSpec.builder("provide${it.name}")
+            val returnClassName = ClassName("$GENERATED_FILE_PACKAGE.domain.repos", it.name)
+            val repoImpl = ClassName("$GENERATED_FILE_PACKAGE.data.repos", "${it.name}Impl")
+            funSpec.addParameter(
+                ParameterSpec("api", api)
+            )
+            funSpec.returns(returnClassName)
+            funSpec.addAnnotation(provides)
+            funSpec.addAnnotation(singleton)
+            funSpec.addStatement("return %T(api)", repoImpl)
+            diTypeSpecBuilder.addFunction(funSpec.build())
+        }
+
+        diFileSpecBuilder.addType(diTypeSpecBuilder.build())
+        val diFile = diFileSpecBuilder.build()
+        diFile.writeTo(path)
+
+        /*Generate Retrofit Interface*/
+        val fileSpecBuilder =
+            FileSpec.builder("$GENERATED_FILE_PACKAGE.data", "Api")
+        val typeSpecBuilder = TypeSpec.interfaceBuilder("Api")
+
+        apiMetaData.repos.forEach { repo ->
+            repo.methods.forEach { method ->
+                val annotationClassName = when (method.httpMethod) {
+                    MetaHttpMethod.POST -> {
+                        post
+                    }
+                    MetaHttpMethod.GET -> {
+                        get
+                    }
+                    MetaHttpMethod.PUT -> {
+                        put
+                    }
+                    MetaHttpMethod.DELETE -> {
+                        delete
+                    }
+                    MetaHttpMethod.HEAD -> {
+                        head
+                    }
+                    else -> {
+                        options
+                    }
+                }
+                val annotationSpec = AnnotationSpec.builder(annotationClassName)
+                    .addMember("\"${method.path}\"")
+                    .build()
+                val returnClassName =
+                    ClassName("$GENERATED_FILE_PACKAGE.data.models", method.returnType.name)
+                val funSpecBuilder = FunSpec.builder(method.name)
+                    .addModifiers(KModifier.SUSPEND)
+                    .addModifiers(KModifier.ABSTRACT)
+                    .addAnnotation(annotationSpec)
+                    .returns(returnClassName)
+                method.parameter.forEach { parameter ->
+                    val typeName = getTypeName(parameter.type)
+                    funSpecBuilder.addParameter(
+                        parameter.name, typeName
+                    )
+                }
+
+                typeSpecBuilder.addFunction(funSpecBuilder.build())
+            }
+        }
+
+        val file = fileSpecBuilder.addType(typeSpecBuilder.build()).build()
+        file.writeTo(path)
+
 
         /*Generate Repositories*/
 
@@ -30,113 +150,24 @@ object ServiceGenerator {
             val typeSpecBuilder = TypeSpec.interfaceBuilder(repo.name)
             repo.methods.forEach { method ->
                 val className =
-                    ClassName("$GENERATED_FILE_PACKAGE.models", method.returnType.name)
+                    ClassName("$GENERATED_FILE_PACKAGE.data.models", method.returnType.name)
                 val funSecBuilder = FunSpec.builder(method.name)
                     .addModifiers(KModifier.ABSTRACT)
+                    .addModifiers(KModifier.SUSPEND)
                     .returns(
-                        ClassName("kotlinx.coroutines.flow", "Flow").parameterizedBy(
-                            className
-                        )
+                        className
                     )
                 method.parameter.forEach {
-                    when (it.type.typeId) {
-                        MetaType.LIST -> {
-                            if (it.type.of!!.typeId == MetaType.MODEL) {
-                                val of = ClassName(
-                                    "$GENERATED_FILE_PACKAGE.models",
-                                    it.type.of.name
-                                )
-                                funSecBuilder.addParameter(
-                                    it.name,
-                                    LIST.parameterizedBy(of)
-                                        .copy(nullable = it.type.nullable)
-                                )
-                            } else {
-                                val of = ClassName(
-                                    "",
-                                    getOfType(it.type.of).simpleName!!
-                                )
-                                funSecBuilder.addParameter(
-                                    it.name,
-                                    LIST.parameterizedBy(of).copy(it.type.nullable)
-                                )
-                            }
-                        }
-                        MetaType.MODEL -> {
-                            val className = ClassName(
-                                "$GENERATED_FILE_PACKAGE.models", it.type.name
-                            )
-                            funSecBuilder.addParameter(
-                                it.name,
-                                className.copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.ENUM -> {
-                            val className = ClassName(
-                                "$GENERATED_FILE_PACKAGE.enums", it.type.name
-                            )
-                            funSecBuilder.addParameter(
-                                it.name,
-                                className.copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.STRING -> {
-                            funSecBuilder.addParameter(
-                                it.name,
-                                String::class.asClassName()
-                                    .copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.BOOLEAN -> {
-                            funSecBuilder.addParameter(
-                                it.name,
-                                Boolean::class.asClassName()
-                                    .copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.NUMBER -> {
-                            when (it.type.formatId) {
-                                MetaNumberFormat.DOUBLE -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Double::class.asClassName()
-                                            .copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                MetaNumberFormat.LONG -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Long::class.asClassName()
-                                            .copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                MetaNumberFormat.FLOAT -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Float::class.asClassName()
-                                            .copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                else -> funSecBuilder.addParameter(
-                                    it.name,
-                                    Int::class.asClassName()
-                                        .copy(nullable = it.type.nullable)
-                                )
-                            }
-                        }
-                        else -> funSecBuilder.addParameter(
-                            it.name,
-                            Any::class.asClassName().copy(nullable = it.type.nullable)
-                        )
-                    }
-
+                    val typeName = getTypeName(it.type)
+                    funSecBuilder.addParameter(
+                        it.name, typeName
+                    )
                 }
                 val funSpec = funSecBuilder.build()
                 typeSpecBuilder.addFunction(funSpec)
             }
             fileSpecBuilder.addType(typeSpecBuilder.build())
             val file = fileSpecBuilder.build()
-            val path = Path(getGeneratedDirectory())
             file.writeTo(path)
         }
 
@@ -152,108 +183,39 @@ object ServiceGenerator {
                     repo.name
                 )
             )
+            val constructorBuilder = FunSpec.constructorBuilder()
+                .addParameter(ParameterSpec("api", api))
+                .addAnnotation(inject)
+            typeSpecBuilder.primaryConstructor(constructorBuilder.build())
+            typeSpecBuilder.addProperty(
+                PropertySpec.builder(
+                    "api", api
+                ).initializer("api").build()
+            )
             repo.methods.forEach { method ->
                 val className =
-                    ClassName("$GENERATED_FILE_PACKAGE.models", method.returnType.name)
+                    ClassName("$GENERATED_FILE_PACKAGE.data.models", method.returnType.name)
+                var parameterInString = ""
+                method.parameter.forEach {
+                    parameterInString = parameterInString + it.name + ","
+                }
                 val funSecBuilder = FunSpec.builder(method.name)
-                    .returns(
-                        ClassName("kotlinx.coroutines.flow", "Flow").parameterizedBy(className)
+                    .returns(className)
+                    .addModifiers(KModifier.SUSPEND)
+                    .addStatement(
+                        "return api.${method.name}($parameterInString)"
                     )
-                    .addStatement("return %T{}", flow)
                     .addModifiers(KModifier.OVERRIDE)
                 method.parameter.forEach {
-                    when (it.type.typeId) {
-                        MetaType.LIST -> {
-                            if (it.type.of!!.typeId == MetaType.MODEL) {
-                                val of = ClassName(
-                                    "$GENERATED_FILE_PACKAGE.models",
-                                    it.type.of.name
-                                )
-                                funSecBuilder.addParameter(
-                                    it.name,
-                                    LIST.parameterizedBy(of).copy(nullable = it.type.nullable)
-                                )
-                            } else {
-                                val of = ClassName(
-                                    "",
-                                    getOfType(it.type.of).simpleName!!
-                                )
-                                funSecBuilder.addParameter(
-                                    it.name,
-                                    LIST.parameterizedBy(of).copy(it.type.nullable)
-                                )
-                            }
-                        }
-                        MetaType.MODEL -> {
-                            val className = ClassName(
-                                "$GENERATED_FILE_PACKAGE.models", it.type.name
-                            )
-                            funSecBuilder.addParameter(
-                                it.name,
-                                className.copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.ENUM -> {
-                            val className = ClassName(
-                                "$GENERATED_FILE_PACKAGE.enums", it.type.name
-                            )
-                            funSecBuilder.addParameter(
-                                it.name,
-                                className.copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.STRING -> {
-                            funSecBuilder.addParameter(
-                                it.name,
-                                String::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.BOOLEAN -> {
-                            funSecBuilder.addParameter(
-                                it.name,
-                                Boolean::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                        }
-                        MetaType.NUMBER -> {
-                            when (it.type.formatId) {
-                                MetaNumberFormat.DOUBLE -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Double::class.asClassName()
-                                            .copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                MetaNumberFormat.LONG -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Long::class.asClassName().copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                MetaNumberFormat.FLOAT -> {
-                                    funSecBuilder.addParameter(
-                                        it.name,
-                                        Float::class.asClassName().copy(nullable = it.type.nullable)
-                                    )
-                                }
-                                else -> funSecBuilder.addParameter(
-                                    it.name,
-                                    Int::class.asClassName().copy(nullable = it.type.nullable)
-                                )
-                            }
-                        }
-                        else -> funSecBuilder.addParameter(
-                            it.name,
-                            Any::class.asClassName().copy(nullable = it.type.nullable)
-                        )
-                    }
-
+                    val typeName = getTypeName(it.type)
+                    funSecBuilder.addParameter(it.name, typeName)
                 }
                 val funSpec = funSecBuilder.build()
                 typeSpecBuilder.addFunction(funSpec)
             }
+
             fileSpecBuilder.addType(typeSpecBuilder.build())
             val file = fileSpecBuilder.build()
-            val path = Path(getGeneratedDirectory())
             file.writeTo(path)
         }
 
@@ -266,254 +228,131 @@ object ServiceGenerator {
             }
             fileSpecBuilder.addType(typeSpec = typeSpecBuilder.build())
             val file = fileSpecBuilder.build()
-            val path = Path(getGeneratedDirectory())
             file.writeTo(path)
         }
 
         /*Generate Models*/
         apiMetaData.models.forEach { model ->
-            val fileSpecBuilder = FileSpec.builder("$GENERATED_FILE_PACKAGE.models", model.name)
+            val fileSpecBuilder =
+                FileSpec.builder("$GENERATED_FILE_PACKAGE.data.models", model.name)
             val typeSpecBuilder =
                 TypeSpec.classBuilder(model.name).addModifiers(KModifier.DATA)
             val constructorBuilder = FunSpec.constructorBuilder()
             model.properties.forEach {
-                when (it.type.typeId) {
-                    MetaType.LIST -> {
-                        if (it.type.of!!.typeId == MetaType.MODEL) {
-                            val of = ClassName(
-                                "$GENERATED_FILE_PACKAGE.models",
-                                it.type.of.name
-                            )
-                            constructorBuilder.addParameter(
-                                it.name,
-                                LIST.parameterizedBy(of).copy(nullable = it.type.nullable)
-                            )
-                        } else {
-                            val of = ClassName(
-                                "",
-                                getOfType(it.type.of).simpleName!!
-                            )
-                            constructorBuilder.addParameter(
-                                it.name,
-                                LIST.parameterizedBy(of).copy(it.type.nullable)
-                            )
-                        }
-                    }
-                    MetaType.MODEL -> {
-                        val className = ClassName(
-                            "$GENERATED_FILE_PACKAGE.models", it.type.name
-                        )
-                        constructorBuilder.addParameter(
-                            it.name,
-                            className.copy(nullable = it.type.nullable)
-                        )
-                    }
-                    MetaType.ENUM -> {
-                        val className = ClassName(
-                            "$GENERATED_FILE_PACKAGE.enums", it.type.name
-                        )
-                        constructorBuilder.addParameter(
-                            it.name,
-                            className.copy(nullable = it.type.nullable)
-                        )
-                    }
-                    MetaType.STRING -> {
-                        constructorBuilder.addParameter(
-                            it.name,
-                            String::class.asClassName().copy(nullable = it.type.nullable)
-                        )
-                    }
-                    MetaType.BOOLEAN -> {
-                        constructorBuilder.addParameter(
-                            it.name,
-                            Boolean::class.asClassName().copy(nullable = it.type.nullable)
-                        )
-                    }
-                    MetaType.NUMBER -> {
-                        when (it.type.formatId) {
-                            MetaNumberFormat.DOUBLE -> {
-                                constructorBuilder.addParameter(
-                                    it.name,
-                                    Double::class.asClassName().copy(nullable = it.type.nullable)
-                                )
-                            }
-                            MetaNumberFormat.LONG -> {
-                                constructorBuilder.addParameter(
-                                    it.name,
-                                    Long::class.asClassName().copy(nullable = it.type.nullable)
-                                )
-                            }
-                            MetaNumberFormat.FLOAT -> {
-                                constructorBuilder.addParameter(
-                                    it.name,
-                                    Float::class.asClassName().copy(nullable = it.type.nullable)
-                                )
-                            }
-                            else -> constructorBuilder.addParameter(
-                                it.name,
-                                Int::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                        }
-                    }
-                    else -> constructorBuilder.addParameter(
-                        it.name,
-                        Any::class.asClassName().copy(nullable = it.type.nullable)
-                    )
-                }
-
+                val typeName = getTypeName(it.type)
+                constructorBuilder.addParameter(it.name, typeName)
             }
             model.properties.forEach {
-                when (it.type.typeId) {
-                    MetaType.LIST -> {
-                        if (it.type.of!!.typeId == MetaType.MODEL) {
-                            val of = ClassName(
-                                "$GENERATED_FILE_PACKAGE.models",
-                                it.type.of.name
-                            )
-                            typeSpecBuilder.addProperty(
-                                PropertySpec.builder(
-                                    it.name,
-                                    LIST.parameterizedBy(of).copy(nullable = it.type.nullable)
-                                )
-                                    .initializer(it.name)
-                                    .build()
-                            )
-                        } else {
-                            val of = ClassName(
-                                "",
-                                getOfType(it.type.of).simpleName!!
-                            )
-                            typeSpecBuilder.addProperty(
-                                PropertySpec.builder(
-                                    it.name,
-                                    LIST.parameterizedBy(of).copy(it.type.nullable)
-                                )
-                                    .initializer(it.name)
-                                    .build()
-                            )
-                        }
-                    }
-                    MetaType.MODEL -> {
-                        val className = ClassName(
-                            "$GENERATED_FILE_PACKAGE.models", it.type.name
-                        )
-                        typeSpecBuilder.addProperty(
-                            PropertySpec.builder(it.name, className.copy(it.type.nullable))
-                                .initializer(it.name)
-                                .build()
-                        )
-                    }
-                    MetaType.ENUM -> {
-                        val className = ClassName(
-                            "$GENERATED_FILE_PACKAGE.enums", it.type.name
-                        )
-                        typeSpecBuilder.addProperty(
-                            PropertySpec.builder(
-                                it.name,
-                                className.copy(nullable = it.type.nullable)
-                            )
-                                .initializer(it.name)
-                                .build()
-                        )
-                    }
-                    MetaType.STRING -> {
-                        typeSpecBuilder.addProperty(
-                            PropertySpec.builder(
-                                it.name,
-                                String::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                                .initializer(it.name)
-                                .build()
-                        )
-                    }
-                    MetaType.BOOLEAN -> {
-                        typeSpecBuilder.addProperty(
-                            PropertySpec.builder(
-                                it.name,
-                                Boolean::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                                .initializer(it.name)
-                                .build()
-                        )
-                    }
-                    MetaType.NUMBER -> {
-                        when (it.type.formatId) {
-                            MetaNumberFormat.DOUBLE -> {
-                                typeSpecBuilder.addProperty(
-                                    PropertySpec.builder(
-                                        it.name,
-                                        Double::class.asClassName()
-                                            .copy(nullable = it.type.nullable)
-                                    ).initializer(it.name).build()
-                                )
-                            }
-                            MetaNumberFormat.LONG -> {
-                                typeSpecBuilder.addProperty(
-                                    PropertySpec.builder(
-                                        it.name,
-                                        Long::class.asClassName().copy(nullable = it.type.nullable)
-                                    ).initializer(it.name).build()
-                                )
-                            }
-                            MetaNumberFormat.FLOAT -> {
-                                typeSpecBuilder.addProperty(
-                                    PropertySpec.builder(
-                                        it.name,
-                                        Float::class.asClassName().copy(nullable = it.type.nullable)
-                                    ).initializer(it.name).build()
-                                )
-                            }
-                            else -> {
-                                typeSpecBuilder.addProperty(
-                                    PropertySpec.builder(
-                                        it.name,
-                                        Int::class.asClassName().copy(nullable = it.type.nullable)
-                                    ).initializer(it.name).build()
-                                )
-                            }
-                        }
-                    }
-                    else -> {
-                        typeSpecBuilder.addProperty(
-                            PropertySpec.builder(
-                                it.name,
-                                Any::class.asClassName().copy(nullable = it.type.nullable)
-                            )
-                                .initializer(it.name)
-                                .build()
-                        )
-                    }
-                }
+                val typeName = getTypeName(it.type)
+                typeSpecBuilder.addProperty(
+                    PropertySpec.builder(
+                        it.name, typeName
+                    ).initializer(it.name).build()
+                )
 
             }
             typeSpecBuilder.primaryConstructor(constructorBuilder.build())
             fileSpecBuilder.addType(typeSpecBuilder.build())
             fileSpecBuilder.suppressWarningTypes("RedundantVisibilityModifier")
             val file = fileSpecBuilder.build()
-            val path = Path(getGeneratedDirectory())
             file.writeTo(path)
         }
 
     }
 
+    private fun getTypeName(type: Type): TypeName {
+        return when (type.typeId) {
+            MetaType.LIST -> {
 
-    private fun getOfType(type: Type) = when (type.typeId) {
+                if (type.of!!.typeId == MetaType.MODEL) {
+                    val of = ClassName(
+                        "$GENERATED_FILE_PACKAGE.data.models",
+                        type.of.name
+                    )
+                    LIST.parameterizedBy(of).copy(nullable = type.nullable)
+                } else {
+                    val of = ClassName(
+                        "",
+                        getOfType(type.of).simpleName
+                    )
+                    LIST.parameterizedBy(of).copy(nullable = type.nullable)
+
+                }
+            }
+            MetaType.MODEL -> {
+                val className = ClassName(
+                    "$GENERATED_FILE_PACKAGE.data.models", type.name
+                )
+                className.copy(nullable = type.nullable)
+
+            }
+            MetaType.ENUM -> {
+                val className = ClassName(
+                    "$GENERATED_FILE_PACKAGE.enums", type.name
+                )
+                className.copy(nullable = type.nullable)
+
+            }
+            MetaType.STRING -> {
+                String::class.asClassName().copy(nullable = type.nullable)
+
+            }
+            MetaType.BOOLEAN -> {
+                Boolean::class.asClassName().copy(nullable = type.nullable)
+            }
+            MetaType.NUMBER -> {
+                when (type.formatId) {
+                    MetaNumberFormat.DOUBLE -> {
+                        Double::class.asClassName()
+                            .copy(nullable = type.nullable)
+
+                    }
+                    MetaNumberFormat.LONG -> {
+                        Long::class.asClassName().copy(nullable = type.nullable)
+
+                    }
+                    MetaNumberFormat.FLOAT -> {
+                        Float::class.asClassName().copy(nullable = type.nullable)
+                    }
+                    else ->
+                        Int::class.asClassName().copy(nullable = type.nullable)
+
+                }
+            }
+            else ->
+                Any::class.asClassName().copy(nullable = type.nullable)
+
+        }
+
+    }
+
+
+    private fun getOfType(type: Type): ClassName = when (type.typeId) {
+        MetaType.LIST -> {
+            getOfType(type)
+        }
+        MetaType.MODEL -> {
+            ClassName(
+                "$GENERATED_FILE_PACKAGE.data.models",
+                type.name
+            )
+        }
         MetaType.STRING -> {
-            String::class
+            String::class.asClassName()
         }
         MetaType.BOOLEAN -> {
-            Boolean::class
+            Boolean::class.asClassName()
         }
         MetaType.NUMBER -> {
             when (type.formatId) {
-                MetaNumberFormat.DOUBLE -> Double::class
-                MetaNumberFormat.LONG -> Long::class
-                MetaNumberFormat.FLOAT -> Float::class
-                else -> Int::class
+                MetaNumberFormat.DOUBLE -> Double::class.asClassName()
+                MetaNumberFormat.LONG -> Long::class.asClassName()
+                MetaNumberFormat.FLOAT -> Float::class.asClassName()
+                else -> Int::class.asClassName()
             }
         }
         else -> {
-            Any::class
+            Any::class.asClassName()
         }
 
     }
