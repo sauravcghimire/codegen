@@ -1,0 +1,867 @@
+type Gender {
+  _id: String!
+  gender: String!
+  slug: String
+  icon: String
+  iconUrl: String
+  order: Float!
+  description: String
+}
+
+type LookingForGender {
+  _id: String!
+  label: String!
+  icon: String
+  iconUrl: String!
+  order: Float
+  description: String!
+  slug: String!
+}
+
+type proximityPreference {
+  min: Int!
+  max: Int!
+}
+
+type agePreference {
+  min: Int!
+  max: Int!
+}
+
+type SocialLink {
+  facebook: String!
+  twitter: String!
+  instagram: String!
+  tikTok: String!
+}
+
+type Coordinates {
+  lat: Float
+  long: Float
+}
+
+type Location {
+  coordinates: Coordinates!
+  displayAddress: String!
+}
+
+type Interest {
+  _id: String!
+  interest: String!
+  icon: String
+  iconUrl: String!
+  order: Float!
+}
+
+type UserVerificationImage {
+  _id: String
+  verificationImageId: String
+  uploadedKey: String
+  verificationStatus: String
+}
+
+type UserInAdmin {
+  _id: String
+  name: String
+  email: String
+  dateOfBirth: DateTime
+  contactNumber: String
+  profileImage: String
+  agePreference: agePreference
+  socialLink: SocialLink
+  proximityPreference: proximityPreference
+  interest: [Interest!]
+  gender: Gender
+  lookingFor: [Gender!]
+  location: Location
+  bio: String
+  hasProfileCompleted: Boolean
+  lastLoggedInAt: DateTime
+  createdAt: DateTime
+  hasFirstIntroCreated: Boolean
+  isActive: Boolean
+  deactivatedByAdmin: Boolean
+  verificationStatus: String
+  verification: [UserVerificationImage!]
+  address: String
+  image: String
+  imageUrl: String
+  loginType: String
+  isVerified: String
+  userPlan: String
+  purchaseDate: DateTime
+  expirationDate: DateTime
+  cancellationDate: DateTime
+}
+
+# A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+scalar DateTime
+
+type MediaMetaData {
+  width: Float
+  height: Float
+}
+
+type NotificationTemplate {
+  _id: String!
+  type: String!
+  title: String!
+  body: String!
+  createdAt: String!
+}
+
+type Meta {
+  userId: String
+  introId: String
+}
+
+type NotificationResponse {
+  _id: String!
+  notificationType: String!
+  title: String!
+  content: String!
+  category: String
+  reportedUserName: String
+  reportedByUserName: String
+  intro: String
+  hasRead: Boolean!
+  metaData: Meta!
+  sentByUserId: String
+  sentByProfileImage: String
+  createdAt: String
+}
+
+type AdminNotificataionList {
+  _id: String!
+  notificationType: String!
+  title: String!
+  content: String
+  category: String
+  reportedUserName: String
+  reportedByUserName: String
+  intro: String
+  hasRead: Boolean!
+  metaData: Meta!
+  user: String
+  userId: String
+  createdAt: DateTime
+}
+
+type PendingRenewalInfo {
+  autoRenewProductId: String!
+  productId: String!
+  originalTransactionId: String!
+  autoRenewStatus: String!
+}
+
+type UserSubscription {
+  userId: String!
+  purchasePlatform: String!
+  packageName: String
+  productId: String
+  receipt: String
+  originalTransactionId: String
+  transactionId: String
+  autoRenewStatus: Boolean
+  purchaseDate: DateTime
+  expirationDate: DateTime
+  cancellationDate: DateTime
+  cancellationReason: String
+  enviroment: String
+  subscriptionStatus: Boolean
+  pendingRenewalInfo: [PendingRenewalInfo!]
+}
+
+type Pagination {
+  total: Float!
+  hasNextPage: Boolean!
+}
+
+type IntroReport {
+  _id: String!
+  intro: String!
+  category: String!
+  description: String
+  createdAt: String!
+}
+
+type IntroReportList {
+  data: [IntroReport!]!
+  pagination: Pagination!
+}
+
+type UsersLocation {
+  lat: String
+  long: String
+}
+
+type InterestInIntroFeed {
+  _id: String
+  interest: String
+  icon: String
+}
+
+type UserInIntroFeed {
+  _id: String!
+  name: String!
+  profileImage: String
+  location: UsersLocation
+  email: String
+  contactNumber: String
+  age: String
+  interest: [InterestInIntroFeed!]
+  unseenCount: Float
+}
+
+type IntroListInFeed {
+  _id: String!
+  introId: String
+  introUrl: String
+  mediaMetaData: MediaMetaData
+  bio: String
+  musicId: String
+  addedBy: UserInIntroFeed!
+  updatedAt: String
+  order: String
+  status: String
+  isSuperLike: Boolean
+  hasAudioLicence: Boolean
+}
+
+type IntroFeedResponse {
+  data: [IntroListInFeed!]!
+  pagination: Pagination!
+  availableRewindQuota: Float
+}
+
+type IntroResponse {
+  _id: String!
+  mediaMetaData: MediaMetaData
+  bio: String
+  isActiveIntro: Boolean
+  hasAudioLicence: Boolean
+  introId: String
+  introUrl: String!
+  addedBy: String!
+  updatedAt: String!
+  isBlocked: Boolean
+  introUnblockAppeal: String
+}
+
+type IntroList {
+  data: [IntroResponse!]!
+  pagination: Pagination!
+}
+
+type IntroListWithUser {
+  data: [IntroListInFeed!]!
+  pagination: Pagination!
+}
+
+type PendingIntroListWithUser {
+  data: [IntroListInFeed!]!
+  pagination: Pagination!
+  numberOfVisibleCell: Float
+}
+
+type Message {
+  message: String
+}
+
+type UserWithIntroList {
+  intro: IntroList!
+  name: String!
+  contactNumber: String
+  profileImage: String
+  email: String!
+}
+
+type CountTime {
+  count: String!
+  remainingTime: String
+}
+
+type UserSetting {
+  verificationStatus: String!
+  userPlan: String!
+  isActive: Boolean!
+  rewind: CountTime
+  superLike: CountTime
+  like: CountTime
+  purchaseToken: String
+}
+
+type User {
+  _id: String
+  name: String
+}
+
+type LikeDislikeIntro {
+  status: String!
+  user: User
+  like: CountTime
+  superLike: CountTime
+}
+
+type IntroLikeDislikeResponse {
+  data: LikeDislikeIntro!
+  message: String!
+}
+
+type consumeRewindQuotaResponse {
+  message: String
+  rewind: Float
+}
+
+type UnfollowedUserInfo {
+  unfollowedUser: String!
+  unfollowedAt: DateTime!
+}
+
+type MusicList {
+  data: [Music!]!
+  pagination: Pagination!
+}
+
+type Music {
+  _id: String
+  title: String
+  coverImage: String
+  audio: String
+  artist: String
+  category: String
+  status: String
+}
+
+type NotificationList {
+  data: [NotificationResponse!]!
+  pagination: Pagination!
+}
+
+type UserSettingMessage {
+  message: String
+  userSetting: UserSetting!
+}
+
+type Token {
+  accessToken: String!
+  accessTokenExpiresIn: String!
+  refreshTokenExpiresIn: String!
+  refreshToken: String!
+}
+
+type AdminWithToken {
+  token: Token!
+  user: Admin!
+}
+
+type Admin {
+  _id: String!
+  name: String!
+  email: String!
+  contactNumber: String!
+  address: String!
+  image: String!
+}
+
+type AdminPagination {
+  total: Float!
+  currentPage: Float!
+  hasNextPage: Boolean!
+}
+
+type UserListWithPagination {
+  data: [UserInAdmin!]!
+  pagination: AdminPagination!
+}
+
+type NotificationTemplateListWithPagination {
+  data: [NotificationTemplate!]!
+  pagination: AdminPagination!
+}
+
+type AdminNotificationList {
+  data: [AdminNotificataionList!]!
+  pagination: AdminPagination!
+  unreadCount: Float!
+}
+
+type EmailTemplate {
+  _id: String!
+  type: String!
+  slug: String!
+  subject: String!
+  content: String!
+}
+
+type AdminEmailTemplateList {
+  data: [EmailTemplate!]!
+  pagination: AdminPagination!
+}
+
+type Total {
+  total: Float!
+}
+
+type InterestUserCount {
+  interest: [String!]
+  userCount: [Float!]!
+}
+
+type MatchRate {
+  date: [String!]!
+  acceptedCount: [Float!]!
+  pendingCount: [Float!]!
+}
+
+type GenderListPagination {
+  data: [Gender!]!
+  pagination: AdminPagination!
+}
+
+type GenderResponse {
+  message: String
+  data: Gender!
+}
+
+type InterestListPagination {
+  data: [Interest!]!
+  pagination: AdminPagination!
+}
+
+type AdminReport {
+  _id: String!
+  reportedUser: String
+  reportedContactNumber: String
+  reportedBy: String
+  reportedByContactNumber: String
+  reportCategory: String
+  reportSlug: String
+  introId: String
+  description: String
+  createdAt: DateTime
+  introCreator: String
+  introCreatorId: String
+  reportedById: String
+  reportedUserId: String
+}
+
+type UserReportListPagination {
+  data: [AdminReport!]!
+  pagination: AdminPagination!
+}
+
+type Reportsummary {
+  _id: String!
+  reportedCount: String
+  reportedUser: String
+  reportedUserId: String
+  reportedContactNumber: String
+}
+
+type UserReportSummaryListPagination {
+  data: [Reportsummary!]!
+  pagination: AdminPagination!
+}
+
+type AdminFileUploadResponse {
+  fileName: String
+  fileUrl: String
+}
+
+type IntroListInAdmin {
+  _id: String!
+  introUrl: String!
+  bio: String
+  musicId: String
+  addedBy: UserInIntroFeed!
+  createdAt: DateTime
+  order: String!
+  isBlocked: Boolean!
+}
+
+type IntroListPagination {
+  data: [IntroListInAdmin!]!
+  pagination: AdminPagination!
+}
+
+type PageList {
+  data: [Page!]!
+}
+
+type Page {
+  _id: String!
+  slug: String!
+  title: String!
+  content: String!
+}
+
+type LookingForGenderListPagination {
+  data: [LookingForGender!]!
+  pagination: AdminPagination!
+}
+
+type LookingForGenderList {
+  data: [Gender!]!
+}
+
+type Query {
+  getMyIntros(body: PaginationBody!): IntroList!
+  getOtherUsersIntros(body: PaginationWithUserIdBody!): IntroList!
+  getOtherUserActiveIntro(body: IntroNotificationBody!): IntroListInFeed!
+  getLikedIntros(body: PaginationBody!): IntroListWithUser!
+  getPendingIntros(body: PaginationBody!): PendingIntroListWithUser!
+  getOtherUsersIntro(body: PaginationWithUserIdBody!): UserWithIntroList!
+  introDetails(body: IntroDeleteBody!): IntroResponse!
+  introFeed(body: PaginationBody!): IntroFeedResponse!
+  getReportedIntro(body: PaginationBody!): IntroReportList!
+  getMusic(body: PaginationBody!): MusicList!
+  Notification(body: PaginationBody!): NotificationList!
+  NotificationSettingsDetails: NotificationSettings!
+  subscriptionDetails: UserSubscription!
+  userSetting: UserSetting!
+  authenticatedUser: Admin!
+  getAdmins(body: UserListBody!): UserListWithPagination!
+  getAdminDetails(body: UserDetailsBody!): UserInAdmin!
+  getUsers(body: UserListBody!): UserListWithPagination!
+  getTotalUser: Total!
+  getUserDetails(body: UserDetailsBody!): UserInAdmin!
+  getUserWithGender: InterestUserCount!
+  getMatchRates: MatchRate!
+  getGendersAdmin(body: GenderListAdminBody!): GenderListPagination!
+  getLookingForGendersAdmin(body: LookingForGenderListAdminBody!): LookingForGenderListPagination!
+  getLookingForGendersList: LookingForGenderList!
+  getInterestAdmin(body: InterestListAdminBody!): InterestListPagination!
+  getInterestUserCount: InterestUserCount!
+  notificationTemplate(body: UserListBody!): NotificationTemplateListWithPagination!
+  getNotificationTemplateDetails(body: UserDetailsBody!): NotificationTemplate!
+  getNotificationList(body: UserListBody!): AdminNotificationList!
+  getAdminNotification(body: UserListBody!): AdminNotificationList!
+  getReportedUserForAdmin(body: GenderListAdminBody!): UserReportListPagination!
+  getReportedUserCounts(body: GenderListAdminBody!): UserReportSummaryListPagination!
+  getReportedIntroForAdmin(body: GenderListAdminBody!): UserReportListPagination!
+  getIntroForAdmin(body: GenderListAdminBody!): IntroListPagination!
+  getAllPage: PageList!
+  getPage(body: GetSinglePage!): Page!
+  getPageByID(body: GetSinglePageBYID!): Page!
+  listEmailTemplate(body: ListEmailTemplatesBody!): AdminEmailTemplateList!
+}
+
+input PaginationBody {
+  skip: Float!
+  limit: Float!
+}
+
+input PaginationWithUserIdBody {
+  skip: Float!
+  limit: Float!
+  _id: String!
+}
+
+input IntroNotificationBody {
+  _id: String!
+  notificationId: String
+}
+
+input IntroDeleteBody {
+  _id: String!
+}
+
+type NotificationSettings {
+  whenMatch: Boolean!
+  whenLike: Boolean!
+  whenMessage: Boolean!
+}
+
+input UserListBody {
+  skip: Float!
+  limit: Float!
+  search: String!
+  order: String
+  orderBy: String
+}
+
+input UserDetailsBody {
+  id: String!
+}
+
+input GenderListAdminBody {
+  skip: Float!
+  limit: Float!
+  search: String!
+  order: String
+  orderBy: String
+  id: String
+}
+
+input LookingForGenderListAdminBody {
+  skip: Float!
+  limit: Float!
+  search: String
+  order: String
+  orderBy: String
+  id: String
+}
+
+input InterestListAdminBody {
+  skip: Float!
+  limit: Float!
+  search: String!
+}
+
+input GetSinglePage {
+  slug: String!
+}
+
+input GetSinglePageBYID {
+  _id: String!
+}
+
+input ListEmailTemplatesBody {
+  skip: Float!
+  limit: Float!
+  search: String!
+}
+
+type Mutation {
+  addIntro(body: IntroBody!): IntroResponse!
+  updateIntro(body: IntroUpdateBody!): IntroResponse!
+  deleteIntro(body: IntroDeleteBody!): Message!
+  appealForIntroUnblock(body: IntroAppealUnblockBody!): Message!
+  likeDislike(body: LikeDislikeInput!): IntroLikeDislikeResponse!
+  consumeRewindQuota(body: ConsumeRewindQuotaInput!): consumeRewindQuotaResponse!
+  reportIntro(body: IntroReportBody!): Message!
+  notificationSettings(body: NotificationSettingInput!): Message!
+  readNotification(body: IntroDeleteBody!): Message!
+  readAllNotification: Message!
+  clearNotificationBadge(body: BadgeResetBody!): Message!
+  sendChatNotification(body: ChatNotificationBody!): Message!
+  verifyIosSubscriptionToken(body: IosInappPurchaseBody!): UserSettingMessage!
+  verifyAndroidSubscriptionToken(body: AndroidInappPurchaseBody!): UserSettingMessage!
+  hardPass(body: UnfollowedUser!): Message!
+  adminLogin(body: AdminLoginBody!): AdminWithToken!
+  forgetPassword(body: AdminForgotPasswordBody!): Message!
+  resetPassword(body: AdminResetPasswordBody!): Message!
+  refreshToken(body: RefreshTokenBody!): Token!
+  changePassword(body: AdminChangePasswordBody!): Message!
+  updateAdmin(body: AdminUpdateUserBody!): Message!
+  deleteAdmin(body: UserDetailsBody!): Message!
+  updateUser(body: UserUpdateBody!): Message!
+  deleteUser(body: UserDetailsBody!): Message!
+  deactivateUser(body: DeactivateUserBody!): Message!
+  verifyUser(body: UserVerificationBody!): Message!
+  addGender(body: AdminAddGenderBody!): GenderResponse!
+  updateGender(body: AdminUpdateGenderBody!): GenderResponse!
+  deleteGender(body: UserDetailsBody!): Message!
+  addLookingForGender(body: AdminAddLookingForGenderBody!): Message!
+  updateLookingForGender(body: AdminUpdateLookingForGenderBody!): Message!
+  deleteLookingForGender(body: UserDetailsBody!): Message!
+  addInterest(body: AdminAddInterestBody!): Message!
+  updateInterest(body: AdminUpdateInterestBody!): Message!
+  deleteInterest(body: UserDetailsBody!): Message!
+  updateNotificationTemplate(body: NotificationTemplateUpdateBody!): Message!
+  resetAdminNotificationCount: Message!
+  uploadToAws(prefix: String, file: Upload!): AdminFileUploadResponse!
+  deleteIntroFromAdmin(body: IntroDeleteBody!): Message!
+  activeInactiveIntro(body: IntroDeleteBody!): Message!
+  addPage(createPageInput: CreatePageInput!): Message!
+  updatePage(body: PageUpdateBody!): Message!
+  updateEmailTemplate(body: UpdateEmailTemplateBody!): Message!
+}
+
+input IntroBody {
+  Key: String!
+  musicId: String
+  bio: String
+  isActiveIntro: Boolean!
+  mediaMetaData: MediaMetaDataBody
+}
+
+input MediaMetaDataBody {
+  width: Float!
+  height: Float!
+}
+
+input IntroUpdateBody {
+  Key: String
+  musicId: String
+  bio: String
+  isActiveIntro: Boolean!
+  mediaMetaData: MediaMetaDataBody
+  _id: String!
+}
+
+input IntroAppealUnblockBody {
+  introId: String!
+  appeal: String
+}
+
+input LikeDislikeInput {
+  userId: String!
+  action: String!
+}
+
+input ConsumeRewindQuotaInput {
+  quota: Int!
+}
+
+input IntroReportBody {
+  introId: String!
+  reportCategoryId: String!
+  description: String
+}
+
+input NotificationSettingInput {
+  whenLike: Boolean!
+  whenMatch: Boolean!
+  whenMessage: Boolean!
+}
+
+input BadgeResetBody {
+  badgeCount: Float!
+}
+
+input ChatNotificationBody {
+  fromId: String!
+  toId: String!
+  message: String!
+}
+
+input IosInappPurchaseBody {
+  receiptData: String!
+  type: String!
+}
+
+input AndroidInappPurchaseBody {
+  packageName: String!
+  productId: String!
+  purchaseToken: String!
+  type: String!
+}
+
+input UnfollowedUser {
+  userId: String!
+}
+
+input AdminLoginBody {
+  email: String!
+  password: String!
+}
+
+input AdminForgotPasswordBody {
+  email: String!
+}
+
+input AdminResetPasswordBody {
+  token: String!
+  password: String!
+}
+
+input RefreshTokenBody {
+  refreshToken: String!
+}
+
+input AdminChangePasswordBody {
+  password: String!
+  newPassword: String!
+}
+
+input AdminUpdateUserBody {
+  id: String
+  name: String!
+  email: String!
+  contactNumber: String!
+  address: String!
+  image: String!
+  bio: String
+  password: String
+}
+
+input UserUpdateBody {
+  id: String
+  name: String
+  email: String
+  contactNumber: String
+  bio: String
+}
+
+input DeactivateUserBody {
+  _id: String!
+  deactivatedByAdmin: Boolean!
+}
+
+input UserVerificationBody {
+  id: String!
+  status: String!
+}
+
+input AdminAddGenderBody {
+  gender: String!
+  slug: String!
+  icon: String
+  description: String
+}
+
+input AdminUpdateGenderBody {
+  _id: String
+  order: Float!
+  gender: String!
+  icon: String
+  description: String
+}
+
+input AdminAddLookingForGenderBody {
+  label: String!
+  icon: String
+  slug: String!
+  description: String
+}
+
+input AdminUpdateLookingForGenderBody {
+  _id: String
+  order: Float!
+  label: String!
+  slug: String!
+  icon: String
+  description: String
+}
+
+input AdminAddInterestBody {
+  interest: String!
+  icon: String!
+}
+
+input AdminUpdateInterestBody {
+  interest: String!
+  icon: String!
+  _id: String
+  order: Float!
+}
+
+input NotificationTemplateUpdateBody {
+  id: String!
+  type: String!
+  title: String!
+  body: String!
+}
+
+# The `Upload` scalar type represents a file upload.
+scalar Upload
+
+input CreatePageInput {
+  slug: String!
+  title: String!
+  content: String!
+}
+
+input PageUpdateBody {
+  _id: String!
+  title: String!
+  content: String!
+}
+
+input UpdateEmailTemplateBody {
+  _id: String!
+  subject: String!
+  content: String!
+}

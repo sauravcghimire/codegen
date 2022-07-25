@@ -8,7 +8,7 @@ import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import java.io.File
 import kotlin.io.path.Path
 
-object ServiceGenerator {
+object RetrofitServiceGenerator {
 
     private const val GENERATED_FILE_PACKAGE = "com.nando.codegen.generated"
     private val path = Path(getGeneratedDirectory())

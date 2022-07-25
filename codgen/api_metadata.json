@@ -107,6 +107,19 @@
             },
             "nullable": false
           }
+        },{
+          "name": "playlists",
+          "type": {
+            "typeId": 2,
+            "of": {
+              "typeId": 2,
+              "of": {
+                "typeId":0,
+                "name": "Song"
+              }
+            },
+            "nullable": false
+          }
         }
       ]
     },
@@ -204,6 +217,35 @@
         },
         {
           "name": "data",
+          "type": {
+            "typeId": 2,
+            "of": {
+              "typeId": 0,
+              "name": "UserModel"
+            },
+            "nullable": true
+          }
+        }
+      ]
+    },{
+      "name": "Song",
+      "properties": [
+        {
+          "name": "id",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "title",
+          "type": {
+            "typeId": 3,
+            "nullable": false
+          }
+        },
+        {
+          "name": "artists",
           "type": {
             "typeId": 2,
             "of": {
