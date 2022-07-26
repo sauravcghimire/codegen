@@ -1,14 +1,13 @@
-package com.ebpearls.api
+package com.introdating.app.data.api
 
 import RefreshTokenMutation
 import android.content.Context
 import android.content.Intent
 import com.apollographql.apollo.coroutines.await
-import com.introdating.app.RefreshTokenMutation
 import com.introdating.app.data.DataStringsModel
 import com.introdating.app.data.prefs.PrefsDataStoreManager
-import com.introdating.app.type.RefreshTokenBody
 import com.introdating.app.util.contracts.AppContracts
+import com.ebpearls.sample.data.AuthTokenApiServices
 import kotlinx.coroutines.flow.first
 import type.RefreshTokenBody
 import javax.inject.Inject
