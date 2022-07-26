@@ -35,51 +35,7 @@ object GraphQLServiceGenerator {
     }
 
     private fun generateDIModule() {
-        /*Generate DI Module*/
-        val diFileSpecBuilder =
-            FileSpec.builder("${GENERATED_FILE_PACKAGE}.di", "AppModule")
-        val diTypeSpecBuilder = TypeSpec.objectBuilder("AppModule")
 
-        diTypeSpecBuilder.addAnnotation(module)
-
-        /*Install and singleton in Annotation*/
-        val installInAnnotationSpec = AnnotationSpec.builder(RetrofitServiceGenerator.installInClassName)
-            .addMember("%T::class", RetrofitServiceGenerator.singletonComponent)
-            .build()
-        diTypeSpecBuilder.addAnnotation(installInAnnotationSpec)
-
-        val apiProviderFunction = FunSpec.builder("provideApi")
-        apiProviderFunction.returns(RetrofitServiceGenerator.api)
-        apiProviderFunction.addStatement(
-            "return %T.Builder()\n" +
-                    ".baseUrl(\"${apiMetaData.baseUrl}\")\n" +
-                    ".addConverterFactory(%T.create())\n" +
-                    ".build()\n" +
-                    ".create(Api::class.java)\n",
-            RetrofitServiceGenerator.retrofit, RetrofitServiceGenerator.gsonConverterFactory
-        )
-        apiProviderFunction.addAnnotation(RetrofitServiceGenerator.provides)
-        apiProviderFunction.addAnnotation(RetrofitServiceGenerator.singleton)
-        diTypeSpecBuilder.addFunction(RetrofitServiceGenerator.apiProviderFunction.build())
-
-
-        apiMetaData.repos.forEach {
-            val funSpec = FunSpec.builder("provide${it.name}")
-            val returnClassName = ClassName("${RetrofitServiceGenerator.GENERATED_FILE_PACKAGE}.domain.repos", it.name)
-            val repoImpl = ClassName("${RetrofitServiceGenerator.GENERATED_FILE_PACKAGE}.data.repos", "${it.name}Impl")
-            funSpec.addParameter(
-                ParameterSpec("api", RetrofitServiceGenerator.api)
-            )
-            funSpec.returns(returnClassName)
-            funSpec.addAnnotation(RetrofitServiceGenerator.provides)
-            funSpec.addAnnotation(RetrofitServiceGenerator.singleton)
-            funSpec.addStatement("return %T(api)", repoImpl)
-            diTypeSpecBuilder.addFunction(funSpec.build())
-        }
-
-        diFileSpecBuilder.addType(diTypeSpecBuilder.build())
-        val diFile = diFileSpecBuilder.build()
-        diFile.writeTo(RetrofitServiceGenerator.path)
     }
 
     private fun generateGraphQLForQuery(schema: String) {
