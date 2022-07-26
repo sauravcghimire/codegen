@@ -15,3 +15,4 @@ dependencyResolutionManagement {
 rootProject.name = "CodeGen"
 include ':app'
 include ':codgen'
+include ':api'

@@ -661,6 +661,7 @@ type Mutation {
   deleteInterest(body: UserDetailsBody!): Message!
   updateNotificationTemplate(body: NotificationTemplateUpdateBody!): Message!
   resetAdminNotificationCount: Message!
+  uploadToAws(prefix: String, file: Upload!): AdminFileUploadResponse!
   deleteIntroFromAdmin(body: IntroDeleteBody!): Message!
   activeInactiveIntro(body: IntroDeleteBody!): Message!
   addPage(createPageInput: CreatePageInput!): Message!
